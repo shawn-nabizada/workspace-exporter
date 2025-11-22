@@ -7,7 +7,9 @@
   "engines": {
     "vscode": "^1.70.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "icon": "exportIcon.png",
   "galleryBanner": {
     "color": "#2563EB",
@@ -28,11 +30,18 @@
     "type": "git",
     "url": "https://github.com/shawn-nabizada/workspace-exporter.git"
   },
+  "bugs": {
+    "url": "https://github.com/shawn-nabizada/workspace-exporter/issues"
+  },
+  "homepage": "https://github.com/shawn-nabizada/workspace-exporter",
   "license": "MIT",
+
   "activationEvents": [
     "onCommand:workspaceExporter.exportWithTemplate"
   ],
-  "main": "./extension.js",
+
+  "main": "./out/extension.js",
+
   "contributes": {
     "commands": [
       {
@@ -42,8 +51,18 @@
       }
     ]
   },
+
   "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
     "package": "vsce package",
     "publish": "vsce publish"
+  },
+
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/vscode": "^1.106.1",
+    "typescript": "^5.9.3"
   }
 }

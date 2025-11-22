@@ -1,15 +1,32 @@
-# Exclude dev-only files
+# Exclude development folders
 .vscode/
 .git/
 .gitignore
 .vscodeignore
 
+.github/
+
+node_modules/
+
+# Exclude build/test artifacts
+out/test/
+dist/
+build/
+coverage/
+
+*.vsix
+
 # OS junk
 .DS_Store
 Thumbs.db
 
-# vsix files
-*.vsix
-
-# Exclude unnecessary large files
+# Misc
 *.log
+*.swp
+*.swo
+
+tsconfig.json
+tsconfig.*.json
+*.tsbuildinfo
+
+src/**

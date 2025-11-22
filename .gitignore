@@ -1,18 +1,40 @@
-# VS Code extension build artifacts
-*.vsix
-
-# Node modules
+# Node modules (if you ever add npm dependencies)
 node_modules/
 
+# Build output
+out/
+
+# VSIX packages (build artifacts, never commit)
+*.vsix
+
 # Logs
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # OS junk
 .DS_Store
 Thumbs.db
 
-# Editor junk
+# VS Code project settings
 .vscode/
 .idea/
+*.code-workspace
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Coverage or test output (future-proofing)
+coverage/
+dist/
+build/
+
+# Misc editor artifacts
+*.swp
+*.swo
+*.orig
