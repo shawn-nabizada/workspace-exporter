@@ -106,9 +106,12 @@ async function exportWithTemplate(template) {
       const bytes = await vscode.workspace.fs.readFile(fileUri);
       const text = decoder.decode(bytes);
 
-      outputContent += `===== FILE: ${relPath} =====\n`;
+      const HEADER_BEGIN = '<<<WORKSPACE_EXPORTER_FILE_BEGIN>>>';
+      const HEADER_END = '<<<WORKSPACE_EXPORTER_FILE_END>>>';
+
+      outputContent += `${HEADER_BEGIN} path="${relPath}"\n`;
       outputContent += text;
-      outputContent += '\n\n';
+      outputContent += `\n${HEADER_END} path="${relPath}"\n\n`;
     } catch (err) {
       console.error(`Failed to read ${fileUri.toString()}:`, err);
       outputContent += `===== FILE: ${relPath} (ERROR READING FILE) =====\n\n`;

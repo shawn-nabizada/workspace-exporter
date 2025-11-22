@@ -1,0 +1,15 @@
+# Exclude dev-only files
+.vscode/
+.git/
+.gitignore
+.vscodeignore
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# vsix files
+*.vsix
+
+# Exclude unnecessary large files
+*.log
