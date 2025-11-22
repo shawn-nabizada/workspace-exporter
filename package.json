@@ -1,0 +1,26 @@
+{
+  "name": "workspace-exporter",
+  "displayName": "Workspace Exporter",
+  "description": "Export the current workspace into a single TXT file using different templates (e.g. React+Vite+TS+Tailwind).",
+  "version": "0.0.1",
+  "publisher": "snabby",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:workspaceExporter.exportWithTemplate"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "workspaceExporter.exportWithTemplate",
+        "title": "Export Workspace to TXT (Choose Template)"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package"
+  }
+}
