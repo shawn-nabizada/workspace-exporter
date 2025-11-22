@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "publisher": "snabby",
   "engines": {
-    "vscode": "^1.70.0"
+    "vscode": "^1.106.0"
   },
   "categories": [
     "Other"
