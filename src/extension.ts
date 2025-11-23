@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import { TextEncoder, TextDecoder } from 'util';
 
-const HEADER_BEGIN = '<<<WORKSPACE_EXPORTER_FILE_BEGIN>>>';
-const HEADER_END = '<<<WORKSPACE_EXPORTER_FILE_END>>>';
+import { estimateTokens, generateFileTree, formatOutput, HEADER_BEGIN, HEADER_END } from './utils';
 
 interface TemplateDefinition {
   id: string;
@@ -82,85 +81,7 @@ function getGlobalExcludes(): string[] {
   return config.get<string[]>('globalExcludes', []);
 }
 
-/**
- * Format the output content based on the selected format.
- */
-function formatOutput(filesContent: { path: string; content: string }[], format: string): string {
-  if (format === 'xml') {
-    return `<workspace>\n${filesContent
-      .map((f) => `  <file path="${f.path}">\n    <![CDATA[\n${f.content}\n    ]]>\n  </file>`)
-      .join('\n')}\n</workspace>`;
-  } else if (format === 'markdown') {
-    return filesContent
-      .map((f) => {
-        const ext = f.path.split('.').pop() || '';
-        return `## File: ${f.path}\n\`\`\`${ext}\n${f.content}\n\`\`\`\n`;
-      })
-      .join('\n');
-  } else {
-    // Default to text format
-    return filesContent
-      .map(
-        (f) => `${HEADER_BEGIN} path="${f.path}"\n${f.content}\n${HEADER_END} path="${f.path}"\n`
-      )
-      .join('\n');
-  }
-}
 
-/**
- * Estimate token count (simple char/4 heuristic).
- */
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
-}
-
-/**
- * Generate a visual file tree from a list of relative paths.
- */
-function generateFileTree(paths: string[]): string {
-  const tree: Record<string, any> = {};
-
-  // Build tree structure
-  paths.forEach((path) => {
-    const parts = path.split('/');
-    let current = tree;
-    parts.forEach((part) => {
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part];
-    });
-  });
-
-  // Render tree
-  let output = 'Project Structure:\n';
-
-  function renderNode(node: any, prefix: string) {
-    const keys = Object.keys(node).sort((a, b) => {
-      // Directories first, then files
-      const aIsDir = Object.keys(node[a]).length > 0;
-      const bIsDir = Object.keys(node[b]).length > 0;
-      if (aIsDir && !bIsDir) return -1;
-      if (!aIsDir && bIsDir) return 1;
-      return a.localeCompare(b);
-    });
-
-    keys.forEach((key, index) => {
-      const isLastChild = index === keys.length - 1;
-      const connector = isLastChild ? '└── ' : '├── ';
-      const childPrefix = isLastChild ? '    ' : '│   ';
-
-      output += `${prefix}${connector}${key}\n`;
-
-      if (Object.keys(node[key]).length > 0) {
-        renderNode(node[key], prefix + childPrefix);
-      }
-    });
-  }
-
-  renderNode(tree, '');
-  return output + '\n' + '='.repeat(50) + '\n\n';
-}
 
 import * as cp from 'child_process';
 import * as path from 'path';

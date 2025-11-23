@@ -135,6 +135,7 @@
     "package": "vsce package",
     "publish": "vsce publish",
     "lint": "eslint",
+    "test": "vitest run",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "devDependencies": {
@@ -144,6 +145,7 @@
     "globals": "^16.5.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.47.0"
+    "typescript-eslint": "^8.47.0",
+    "vitest": "^4.0.13"
   }
 }

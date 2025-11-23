@@ -33,3 +33,4 @@ tsconfig.*.json
 *.tsbuildinfo
 
 src/**
+src/test/**

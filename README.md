@@ -147,6 +147,7 @@ This project uses **ESLint** and **Prettier** for code quality.
 
 - Run linting: `npm run lint`
 - Format code: `npm run format`
+- Run tests: `npm test`
 
 ## License
 
