@@ -5,7 +5,7 @@
   "version": "2.0.0",
   "publisher": "snabby",
   "engines": {
-    "vscode": "^1.106.0"
+    "vscode": "^1.104.0"
   },
   "categories": [
     "Other"
@@ -46,7 +46,70 @@
         "title": "Export Workspace to TXT (Choose Template)",
         "category": "Workspace Exporter"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Workspace Exporter",
+      "properties": {
+        "workspaceExporter.customTemplates": {
+          "type": "array",
+          "description": "Define your own custom export templates.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique ID for the template"
+              },
+              "label": {
+                "type": "string",
+                "description": "Display name in the Quick Pick"
+              },
+              "description": {
+                "type": "string",
+                "description": "Short description"
+              },
+              "pattern": {
+                "type": "string",
+                "description": "Glob pattern for files to include"
+              },
+              "exclude": {
+                "type": "string",
+                "description": "Glob pattern for files to exclude"
+              }
+            }
+          },
+          "default": []
+        },
+        "workspaceExporter.globalExcludes": {
+          "type": "array",
+          "description": "Glob patterns to exclude from ALL templates (in addition to template-specific excludes).",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "workspaceExporter.outputFormat": {
+          "type": "string",
+          "enum": [
+            "text",
+            "xml",
+            "markdown"
+          ],
+          "default": "text",
+          "description": "Format of the exported file."
+        },
+        "workspaceExporter.copyToClipboard": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, automatically copies the exported content to the clipboard."
+        },
+        "workspaceExporter.includeFileTree": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, includes a visual file tree at the beginning of the export."
+        }
+      }
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",
@@ -57,7 +120,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
-    "@types/vscode": "^1.106.1",
+    "@types/vscode": "^1.104.0",
     "typescript": "^5.9.3"
   }
 }

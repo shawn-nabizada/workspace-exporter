@@ -11,18 +11,23 @@ or “all text & code files”).
   - Generic web project
   - All text & code files (multi-language)
 
-- 📄 **Single TXT output**
-  - Concatenates files with clear headers:
-    ```txt
-    ===== FILE: src/App.tsx =====
-    ...
-    ```
+- 🌳 **File Tree Visualization**
+  - Includes a visual tree of the exported files at the top of the output.
 
-- 🧹 **Smart excludes**
-  - Skips `node_modules`, `dist`, `build`, `.git`, `.vscode`, `.idea`, `coverage`, and other non-essential directories.
+- 📋 **Clipboard Support**
+  - Option to copy the output directly to the clipboard.
+
+- ⚙️ **Highly Configurable**
+  - Custom templates, global excludes, and output formats (Text, XML, Markdown).
+
+- 📊 **Token Estimation**
+  - Provides an estimated token count for LLM usage.
+
+- 📄 **Single Output File**
+  - Concatenates files with clear headers.
 
 - 🔍 **Deterministic ordering**
-  - Files are sorted by relative path for consistent diffs, debugging, and AI model uploads.
+  - Files are sorted by relative path for consistent diffs.
 
 ## Usage
 
@@ -33,8 +38,30 @@ or “all text & code files”).
    > **Export Workspace to TXT (Choose Template)**
 
 4. Select a template (e.g., *React + Vite + TypeScript + Tailwind*).
-5. The extension generates a TXT file at the workspace root, for example: my-project-react_vite_ts_tailwind_export.txt
-6. Open the output TXT file or share it with collaborators or AI tools for analysis.
+5. The extension generates a file (or copies to clipboard) based on your settings.
+
+## Configuration
+
+You can customize the extension in VS Code Settings (`Ctrl+,`):
+
+- **`workspaceExporter.outputFormat`**:
+  - `text` (default): Standard text format.
+  - `xml`: Wraps files in XML tags.
+  - `markdown`: Wraps files in Markdown code blocks.
+
+- **`workspaceExporter.includeFileTree`**:
+  - `true` (default): Include a visual file tree at the top.
+  - `false`: Disable the file tree.
+
+- **`workspaceExporter.copyToClipboard`**:
+  - `true`: Copy output to clipboard.
+  - `false` (default): Save to a file.
+
+- **`workspaceExporter.globalExcludes`**:
+  - Array of glob patterns to exclude from ALL templates (e.g., `["**/*.test.ts"]`).
+
+- **`workspaceExporter.customTemplates`**:
+  - Define your own templates with specific patterns and excludes.
 
 ## Templates
 
