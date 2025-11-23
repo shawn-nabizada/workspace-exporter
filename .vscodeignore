@@ -3,6 +3,9 @@
 .git/
 .gitignore
 .vscodeignore
+eslint.config.mjs
+.prettierrc
+.prettierignore
 
 .github/
 

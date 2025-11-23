@@ -8,8 +8,10 @@ interface TemplateDefinition {
   id: string;
   label: string;
   description: string;
-  pattern: string;        // glob pattern
-  exclude: string;        // exclude glob
+  /** Glob pattern for file matching */
+  pattern: string;
+  /** Glob pattern for exclusion */
+  exclude: string;
 }
 
 interface RuntimeTemplate extends TemplateDefinition {
@@ -18,6 +20,7 @@ interface RuntimeTemplate extends TemplateDefinition {
 
 /**
  * Define built-in templates here.
+ * These are the default presets available to the user.
  */
 const BUILTIN_TEMPLATES: TemplateDefinition[] = [
   {
@@ -65,7 +68,7 @@ function getTemplatesForCurrentWorkspace(): RuntimeTemplate[] {
 
   const allTemplates = [...BUILTIN_TEMPLATES, ...customTemplates];
 
-  return allTemplates.map(def => ({
+  return allTemplates.map((def) => ({
     ...def,
     include: new vscode.RelativePattern(root, def.pattern)
   }));
@@ -84,19 +87,23 @@ function getGlobalExcludes(): string[] {
  */
 function formatOutput(filesContent: { path: string; content: string }[], format: string): string {
   if (format === 'xml') {
-    return `<workspace>\n${filesContent.map(f =>
-      `  <file path="${f.path}">\n    <![CDATA[\n${f.content}\n    ]]>\n  </file>`
-    ).join('\n')}\n</workspace>`;
+    return `<workspace>\n${filesContent
+      .map((f) => `  <file path="${f.path}">\n    <![CDATA[\n${f.content}\n    ]]>\n  </file>`)
+      .join('\n')}\n</workspace>`;
   } else if (format === 'markdown') {
-    return filesContent.map(f => {
-      const ext = f.path.split('.').pop() || '';
-      return `## File: ${f.path}\n\`\`\`${ext}\n${f.content}\n\`\`\`\n`;
-    }).join('\n');
+    return filesContent
+      .map((f) => {
+        const ext = f.path.split('.').pop() || '';
+        return `## File: ${f.path}\n\`\`\`${ext}\n${f.content}\n\`\`\`\n`;
+      })
+      .join('\n');
   } else {
     // Default to text format
-    return filesContent.map(f =>
-      `${HEADER_BEGIN} path="${f.path}"\n${f.content}\n${HEADER_END} path="${f.path}"\n`
-    ).join('\n');
+    return filesContent
+      .map(
+        (f) => `${HEADER_BEGIN} path="${f.path}"\n${f.content}\n${HEADER_END} path="${f.path}"\n`
+      )
+      .join('\n');
   }
 }
 
@@ -111,13 +118,13 @@ function estimateTokens(text: string): number {
  * Generate a visual file tree from a list of relative paths.
  */
 function generateFileTree(paths: string[]): string {
-  const tree: any = {};
+  const tree: Record<string, any> = {};
 
   // Build tree structure
-  paths.forEach(path => {
+  paths.forEach((path) => {
     const parts = path.split('/');
     let current = tree;
-    parts.forEach(part => {
+    parts.forEach((part) => {
       if (!current[part]) {
         current[part] = {};
       }
@@ -128,7 +135,7 @@ function generateFileTree(paths: string[]): string {
   // Render tree
   let output = 'Project Structure:\n';
 
-  function renderNode(node: any, prefix: string, isLast: boolean) {
+  function renderNode(node: any, prefix: string) {
     const keys = Object.keys(node).sort((a, b) => {
       // Directories first, then files
       const aIsDir = Object.keys(node[a]).length > 0;
@@ -146,19 +153,54 @@ function generateFileTree(paths: string[]): string {
       output += `${prefix}${connector}${key}\n`;
 
       if (Object.keys(node[key]).length > 0) {
-        renderNode(node[key], prefix + childPrefix, isLastChild);
+        renderNode(node[key], prefix + childPrefix);
       }
     });
   }
 
-  renderNode(tree, '', true);
+  renderNode(tree, '');
   return output + '\n' + '='.repeat(50) + '\n\n';
+}
+
+import * as cp from 'child_process';
+import * as path from 'path';
+
+/**
+ * Get files from Git (staged or changed).
+ */
+async function getGitFiles(type: 'staged' | 'changes'): Promise<vscode.Uri[]> {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    return [];
+  }
+  const rootPath = workspaceFolders[0].uri.fsPath;
+
+  return new Promise((resolve) => {
+    const command =
+      type === 'staged' ? 'git diff --name-only --cached' : 'git diff --name-only HEAD';
+
+    cp.exec(command, { cwd: rootPath }, (err, stdout) => {
+      if (err) {
+        console.error('Git command failed:', err);
+        // Fallback or empty if git fails (e.g. not a repo)
+        resolve([]);
+        return;
+      }
+
+      const lines = stdout.split('\n').filter((line) => line.trim() !== '');
+      const uris = lines.map((line) => vscode.Uri.file(path.join(rootPath, line.trim())));
+      resolve(uris);
+    });
+  });
 }
 
 /**
  * Core export logic
  */
-async function exportWithTemplate(template: RuntimeTemplate): Promise<void> {
+async function exportWithTemplate(
+  template: RuntimeTemplate | null,
+  specificFiles?: vscode.Uri[]
+): Promise<void> {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
     vscode.window.showErrorMessage('No workspace folder is open.');
@@ -169,26 +211,57 @@ async function exportWithTemplate(template: RuntimeTemplate): Promise<void> {
   const rootUri = rootFolder.uri;
   const decoder = new TextDecoder('utf-8');
 
-  vscode.window.showInformationMessage(
-    `Exporting workspace using template: ${template.label}…`
-  );
+  let files: vscode.Uri[] = [];
 
-  // Get global excludes and merge with template exclude
-  const globalExcludes = getGlobalExcludes();
-  const excludePattern = globalExcludes.length > 0
-    ? `{${template.exclude},${globalExcludes.join(',')}}`
-    : template.exclude;
+  if (specificFiles) {
+    files = specificFiles;
+    vscode.window.showInformationMessage(`Exporting ${files.length} specific files…`);
+  } else if (template) {
+    vscode.window.showInformationMessage(`Exporting workspace using template: ${template.label}…`);
 
-  // Find files
-  const files = await vscode.workspace.findFiles(template.include, excludePattern);
+    // Get global excludes and merge with template exclude
+    const globalExcludes = getGlobalExcludes();
+    const excludePattern =
+      globalExcludes.length > 0
+        ? `{${template.exclude},${globalExcludes.join(',')}}`
+        : template.exclude;
 
-  if (!files || files.length === 0) {
-    vscode.window.showWarningMessage('No matching files found for this template.');
+    // Find files
+    files = await vscode.workspace.findFiles(template.include, excludePattern);
+  } else {
     return;
   }
 
+  if (!files || files.length === 0) {
+    vscode.window.showWarningMessage('No matching files found.');
+    return;
+  }
+
+  // Interactive Selection:
+  // Allow the user to manually uncheck files from the list before exporting.
+  // This provides granular control over the final output.
+
+  const selected = await vscode.window.showQuickPick(
+    files.map((f) => ({
+      label: vscode.workspace.asRelativePath(f, false),
+      uri: f,
+      picked: true
+    })),
+    {
+      canPickMany: true,
+      placeHolder: 'Select files to include in the export',
+      title: 'Confirm Files'
+    }
+  );
+
+  if (!selected) {
+    return; // User cancelled
+  }
+
+  const finalFiles = selected.map((item) => item.uri);
+
   // Sort by relative path
-  const sortedFiles = files.sort((a, b) => {
+  const sortedFiles = finalFiles.sort((a, b) => {
     const relA = vscode.workspace.asRelativePath(a, false);
     const relB = vscode.workspace.asRelativePath(b, false);
     return relA.localeCompare(relB);
@@ -215,39 +288,89 @@ async function exportWithTemplate(template: RuntimeTemplate): Promise<void> {
   const outputFormat = config.get<string>('outputFormat', 'text');
   const copyToClipboard = config.get<boolean>('copyToClipboard', false);
   const includeFileTree = config.get<boolean>('includeFileTree', true);
+  const chunkSize = config.get<number>('chunkSize', 0);
 
-  let outputContent = '';
+  // Helper to process output
+  const processOutput = async (content: string, partSuffix: string = '') => {
+    const tokenCount = estimateTokens(content);
 
-  if (includeFileTree && outputFormat !== 'xml') {
-    outputContent += generateFileTree(relativePaths);
-  }
+    if (copyToClipboard) {
+      await vscode.env.clipboard.writeText(content);
+      vscode.window.showInformationMessage(
+        `Exported to clipboard (~${tokenCount} tokens)${partSuffix}.`
+      );
+    } else {
+      const baseName = template ? template.id : 'custom_export';
+      const ext = outputFormat === 'xml' ? 'xml' : outputFormat === 'markdown' ? 'md' : 'txt';
+      const outputFileName = `${rootFolder.name}_${baseName}${partSuffix}.${ext}`;
+      const outputUri = vscode.Uri.joinPath(rootUri, outputFileName);
+      const encoder = new TextEncoder();
 
-  outputContent += formatOutput(filesContent, outputFormat);
-  const tokenCount = estimateTokens(outputContent);
-
-  // Handle Clipboard
-  if (copyToClipboard) {
-    await vscode.env.clipboard.writeText(outputContent);
-    vscode.window.showInformationMessage(`Exported ${files.length} files to clipboard (~${tokenCount} tokens).`);
-  } else {
-    // Write to file
-    const outputFileName = `${rootFolder.name}_${template.id}_export.${outputFormat === 'xml' ? 'xml' : outputFormat === 'markdown' ? 'md' : 'txt'}`;
-    const outputUri = vscode.Uri.joinPath(rootUri, outputFileName);
-    const encoder = new TextEncoder();
-
-    try {
-      await vscode.workspace.fs.writeFile(outputUri, encoder.encode(outputContent));
-      vscode.window
-        .showInformationMessage(`Export complete: ${outputFileName} (~${tokenCount} tokens)`, 'Open file')
-        .then(choice => {
-          if (choice === 'Open file') {
-            vscode.window.showTextDocument(outputUri);
-          }
-        });
-    } catch (err) {
-      console.error('Failed to write export file:', err);
-      vscode.window.showErrorMessage('Failed to write export file. See console for details.');
+      try {
+        await vscode.workspace.fs.writeFile(outputUri, encoder.encode(content));
+        vscode.window
+          .showInformationMessage(
+            `Export complete: ${outputFileName} (~${tokenCount} tokens)`,
+            'Open file'
+          )
+          .then((choice) => {
+            if (choice === 'Open file') {
+              vscode.window.showTextDocument(outputUri);
+            }
+          });
+      } catch (err) {
+        console.error('Failed to write export file:', err);
+        vscode.window.showErrorMessage('Failed to write export file.');
+      }
     }
+  };
+
+  // Chunking Logic
+  if (chunkSize > 0) {
+    let currentChunkContent = '';
+    let currentChunkIndex = 1;
+
+    // Include the file tree only in the first chunk to provide context without redundancy.
+    if (includeFileTree && outputFormat !== 'xml') {
+      currentChunkContent += generateFileTree(relativePaths);
+    }
+
+    for (const file of filesContent) {
+      const fileOutput = formatOutput([file], outputFormat);
+      const fileTokens = estimateTokens(fileOutput);
+      const currentTokens = estimateTokens(currentChunkContent);
+
+      // If adding this file exceeds the limit...
+      if (currentTokens + fileTokens > chunkSize) {
+        // If the current chunk is not empty, flush it and start a new one
+        if (currentChunkContent.length > 0) {
+          await processOutput(currentChunkContent, `_part${currentChunkIndex}`);
+          currentChunkContent = '';
+          currentChunkIndex++;
+        }
+
+        // Edge Case: If a single file is larger than the chunk size, we cannot split it
+        // without breaking the "atomic file" rule. In this case, we place it in its own chunk
+        // (the new one we just started), effectively allowing that specific chunk to exceed the limit.
+      }
+
+      currentChunkContent += fileOutput;
+    }
+
+    // Flush remaining
+    if (currentChunkContent.length > 0) {
+      await processOutput(currentChunkContent, `_part${currentChunkIndex}`);
+    }
+  } else {
+    // No chunking
+    let outputContent = '';
+
+    if (includeFileTree && outputFormat !== 'xml') {
+      outputContent += generateFileTree(relativePaths);
+    }
+
+    outputContent += formatOutput(filesContent, outputFormat);
+    await processOutput(outputContent);
   }
 }
 
@@ -263,7 +386,7 @@ async function handleExportCommand(): Promise<void> {
   }
 
   const picked = await vscode.window.showQuickPick(
-    templates.map(t => ({
+    templates.map((t) => ({
       label: t.label,
       description: t.description,
       template: t
@@ -280,13 +403,102 @@ async function handleExportCommand(): Promise<void> {
   await exportWithTemplate(picked.template);
 }
 
-export function activate(context: vscode.ExtensionContext): void {
-  const disposable = vscode.commands.registerCommand(
-    'workspaceExporter.exportWithTemplate',
-    handleExportCommand
+async function handleExportStaged(): Promise<void> {
+  const files = await getGitFiles('staged');
+  if (files.length === 0) {
+    vscode.window.showInformationMessage('No staged files found.');
+    return;
+  }
+  await exportWithTemplate(null, files);
+}
+
+async function handleExportChanges(): Promise<void> {
+  const files = await getGitFiles('changes');
+  if (files.length === 0) {
+    vscode.window.showInformationMessage('No changed files found.');
+    return;
+  }
+  await exportWithTemplate(null, files);
+}
+
+import { PreviewPanel } from './webview';
+
+async function handlePreviewCommand(context: vscode.ExtensionContext): Promise<void> {
+  const templates = getTemplatesForCurrentWorkspace();
+  if (templates.length === 0) {
+    vscode.window.showErrorMessage('No workspace folder open.');
+    return;
+  }
+
+  const picked = await vscode.window.showQuickPick(
+    templates.map((t) => ({
+      label: t.label,
+      description: t.description,
+      template: t
+    })),
+    { placeHolder: 'Select a template to preview' }
   );
 
-  context.subscriptions.push(disposable);
+  if (!picked) {
+    return;
+  }
+
+  const template = picked.template;
+
+  // Show loading...
+  vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Calculating stats...',
+      cancellable: false
+    },
+    async () => {
+      // Get global excludes
+      const globalExcludes = getGlobalExcludes();
+      const excludePattern =
+        globalExcludes.length > 0
+          ? `{${template.exclude},${globalExcludes.join(',')}}`
+          : template.exclude;
+
+      const files = await vscode.workspace.findFiles(template.include, excludePattern);
+      const sortedFiles = files.sort((a, b) => a.path.localeCompare(b.path));
+
+      let totalTokens = 0;
+      const fileList: string[] = [];
+      const decoder = new TextDecoder('utf-8');
+
+      for (const file of sortedFiles) {
+        try {
+          const bytes = await vscode.workspace.fs.readFile(file);
+          const text = decoder.decode(bytes);
+          totalTokens += estimateTokens(text);
+          fileList.push(vscode.workspace.asRelativePath(file, false));
+        } catch {
+          // ignore read errors for stats
+        }
+      }
+
+      PreviewPanel.createOrShow(context.extensionUri);
+      if (PreviewPanel.currentPanel) {
+        PreviewPanel.currentPanel.update({
+          totalFiles: files.length,
+          totalTokens: totalTokens,
+          fileList: fileList
+        });
+      }
+    }
+  );
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(
+    vscode.commands.registerCommand('workspaceExporter.exportWithTemplate', handleExportCommand),
+    vscode.commands.registerCommand('workspaceExporter.exportStaged', handleExportStaged),
+    vscode.commands.registerCommand('workspaceExporter.exportChanges', handleExportChanges),
+    vscode.commands.registerCommand('workspaceExporter.previewExport', () =>
+      handlePreviewCommand(context)
+    )
+  );
 }
 
 export function deactivate(): void {

@@ -35,15 +35,27 @@
   },
   "homepage": "https://github.com/shawn-nabizada/workspace-exporter",
   "license": "MIT",
-  "activationEvents": [
-    "onCommand:workspaceExporter.exportWithTemplate"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "workspaceExporter.exportWithTemplate",
         "title": "Export Workspace to TXT (Choose Template)",
+        "category": "Workspace Exporter"
+      },
+      {
+        "command": "workspaceExporter.exportStaged",
+        "title": "Export Staged Files (Git)",
+        "category": "Workspace Exporter"
+      },
+      {
+        "command": "workspaceExporter.exportChanges",
+        "title": "Export Changed Files (Git)",
+        "category": "Workspace Exporter"
+      },
+      {
+        "command": "workspaceExporter.previewExport",
+        "title": "Preview Export Stats",
         "category": "Workspace Exporter"
       }
     ],
@@ -107,6 +119,11 @@
           "type": "boolean",
           "default": true,
           "description": "If true, includes a visual file tree at the beginning of the export."
+        },
+        "workspaceExporter.chunkSize": {
+          "type": "number",
+          "default": 0,
+          "description": "Approximate token limit per file (0 to disable). If exceeded, output will be split into multiple files."
         }
       }
     }
@@ -116,11 +133,17 @@
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "lint": "eslint",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@types/vscode": "^1.104.0",
-    "typescript": "^5.9.3"
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0"
   }
 }

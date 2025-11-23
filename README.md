@@ -14,6 +14,12 @@ or “all text & code files”).
 - 🌳 **File Tree Visualization**
   - Includes a visual tree of the exported files at the top of the output.
 
+- 🍃 **Git Integration**
+  - Export only staged or changed files.
+
+- 👁️ **Export Preview**
+  - Preview file list and token estimates before exporting.
+
 - 📋 **Clipboard Support**
   - Option to copy the output directly to the clipboard.
 
@@ -33,11 +39,14 @@ or “all text & code files”).
 
 1. Install **Workspace Exporter** from the VS Code Marketplace.
 2. Open any folder/workspace in VS Code.
-3. Press **Ctrl+Shift+P** and run:
+3. Press **Ctrl+Shift+P** and run one of the following commands:
 
-   > **Export Workspace to TXT (Choose Template)**
+   - **Export Workspace to TXT (Choose Template)**
+   - **Export Staged Files**
+   - **Export Changed Files**
+   - **Preview Export**
 
-4. Select a template (e.g., *React + Vite + TypeScript + Tailwind*).
+4. If choosing a template, select one (e.g., *React + Vite + TypeScript + Tailwind*).
 5. The extension generates a file (or copies to clipboard) based on your settings.
 
 ## Configuration
@@ -131,6 +140,13 @@ And many more that use plain-text extensions.
 - Binary files (images, fonts, compiled artifacts) are ignored by design.
 - Very large workspaces may produce very large TXT outputs.
 - Multi-root workspaces currently export only the **first** root folder.
+
+## Contributing
+
+This project uses **ESLint** and **Prettier** for code quality.
+
+- Run linting: `npm run lint`
+- Format code: `npm run format`
 
 ## License
 
