@@ -49,6 +49,13 @@ const BUILTIN_TEMPLATES: TemplateDefinition[] = [
     description: 'Exports JS/TS, JSON, env examples, docs for a Node/Express API.',
     pattern: '**/*.{js,jsx,ts,tsx,json,md}',
     exclude: '**/{node_modules,dist,build,.git,.idea,.vscode,coverage}/**'
+  },
+  {
+    id: 'swift_app',
+    label: 'Swift App (iOS / macOS)',
+    description: 'Exports Swift source files, plist configs, storyboards, xib files, asset catalogs, and project metadata for native Apple apps.',
+    pattern: '**/*.{swift,plist,xib,storyboard,md,json,xcconfig,entitlements}',
+    exclude: '**/{node_modules,dist,build,DerivedData,.git,.idea,.vscode,coverage}/**'
   }
 ];
 
