@@ -2,7 +2,7 @@
   "name": "workspace-files-exporter",
   "displayName": "Workspace Files Exporter",
   "description": "Export the current VS Code workspace into a single TXT file using different templates (React + Vite + TypeScript + Tailwind, generic web, all text & code, and more).",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "publisher": "snabby",
   "engines": {
     "vscode": "^1.104.0"
