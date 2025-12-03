@@ -57,6 +57,11 @@
         "command": "workspaceExporter.previewExport",
         "title": "Preview Export Stats",
         "category": "Workspace Exporter"
+      },
+      {
+        "command": "workspaceExporter.exportOpenFiles",
+        "title": "Export Open Files (Tabs)",
+        "category": "Workspace Exporter"
       }
     ],
     "configuration": {
@@ -125,6 +130,7 @@
           "default": 0,
           "description": "Approximate token limit per file (0 to disable). If exceeded, output will be split into multiple files."
         }
+        
       }
     }
   },

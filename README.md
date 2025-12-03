@@ -35,6 +35,12 @@ or “all text & code files”).
 - 🔍 **Deterministic ordering**
   - Files are sorted by relative path for consistent diffs.
 
+- 📂 **Export Open Files**
+  - Instantly export all text files currently open in your editor tabs.
+
+- 🛡️ **Binary File Guard**
+  - Automatically detects and skips binary files (like images or PDFs) to prevent garbled output.
+
 ## Usage
 
 1. Install **Workspace Exporter** from the VS Code Marketplace.
@@ -45,6 +51,7 @@ or “all text & code files”).
    - **Export Staged Files**
    - **Export Changed Files**
    - **Preview Export**
+   - **Export Open Files (Tabs)**
 
 4. If choosing a template, select one (e.g., *React + Vite + TypeScript + Tailwind*).
 5. The extension generates a file (or copies to clipboard) based on your settings.

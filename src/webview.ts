@@ -56,7 +56,11 @@ export class PreviewPanel {
    * Update the webview with new statistics.
    * @param stats The statistics to display.
    */
-  public update(stats: { totalFiles: number; totalTokens: number; fileList: { path: string; tokens: number }[] }) {
+  public update(stats: {
+    totalFiles: number;
+    totalTokens: number;
+    fileList: { path: string; tokens: number }[];
+  }) {
     this._panel.webview.postMessage({ command: 'update', stats });
   }
 

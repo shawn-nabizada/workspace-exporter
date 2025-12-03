@@ -99,13 +99,13 @@ async function exportWithTemplate(
             exportConfig.outputFormat === 'xml'
               ? 'xml'
               : exportConfig.outputFormat === 'markdown'
-              ? 'md'
-              : 'txt';
+                ? 'md'
+                : 'txt';
           const outputFileName = `${rootFolder.name}_${baseName}${suffix}.${ext}`;
           const outputUri = vscode.Uri.joinPath(rootUri, outputFileName);
           const encoder = new TextEncoder();
           await vscode.workspace.fs.writeFile(outputUri, encoder.encode(content));
-          
+
           if (suffix === '' || suffix === '_part1') {
             vscode.window
               .showInformationMessage(
@@ -233,7 +233,7 @@ async function handlePreviewCommand(): Promise<void> {
     async () => {
       const files = await service.findFiles(picked.template);
       const sortedFiles = files.sort((a, b) => a.path.localeCompare(b.path));
-      
+
       let totalTokens = 0;
       const fileList: { path: string; tokens: number }[] = [];
       const decoder = new TextDecoder('utf-8');
@@ -255,7 +255,7 @@ async function handlePreviewCommand(): Promise<void> {
 
       // No arguments needed now
       PreviewPanel.createOrShow();
-      
+
       if (PreviewPanel.currentPanel) {
         PreviewPanel.currentPanel.update({
           totalFiles: files.length,
@@ -267,13 +267,41 @@ async function handlePreviewCommand(): Promise<void> {
   );
 }
 
+/**
+ * Handles the "Export Open Files" command.
+ * Gathers all currently open text files across all tab groups.
+ */
+async function handleExportOpenFiles(): Promise<void> {
+  const uris = new Set<vscode.Uri>();
+
+  // Iterate over all tab groups (editors can be split)
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      // Check if the tab input is a text file (ignore settings, webviews, etc.)
+      if (tab.input instanceof vscode.TabInputText) {
+        uris.add(tab.input.uri);
+      }
+    }
+  }
+
+  if (uris.size === 0) {
+    vscode.window.showInformationMessage('No open text files found.');
+    return;
+  }
+
+  // Convert Set to Array and export
+  const files = Array.from(uris);
+  await exportWithTemplate(null, files);
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('workspaceExporter.exportWithTemplate', handleExportCommand),
     vscode.commands.registerCommand('workspaceExporter.exportStaged', handleExportStaged),
     vscode.commands.registerCommand('workspaceExporter.exportChanges', handleExportChanges),
     vscode.commands.registerCommand('workspaceExporter.previewExport', handlePreviewCommand),
-    vscode.commands.registerCommand('workspaceExporter.exportSubset', handleExportSubset)
+    vscode.commands.registerCommand('workspaceExporter.exportSubset', handleExportSubset),
+    vscode.commands.registerCommand('workspaceExporter.exportOpenFiles', handleExportOpenFiles)
   );
 }
 
